@@ -1,0 +1,25 @@
+name: unpack-media
+on:
+  push:
+    paths:
+      - 'staging/READY'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode and extract
+        run: |
+          set -e
+          cat staging/part_* | base64 -d > /tmp/media.tar
+          echo "$(cat staging/SHA256)  /tmp/media.tar" | sha256sum -c -
+          tar xf /tmp/media.tar
+          git rm -rq staging
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898289+github-actions[bot]@users.noreply.github.com'
+          git add photos videos
+          git commit -m 'Unpack media files'
+          git push
